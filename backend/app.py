@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
+import psycopg2.extras
 import os
 from dotenv import load_dotenv
 
@@ -9,11 +10,17 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, origins=["*"])  # Update with your Vercel URL in production
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# Supabase connection strings start with "postgres://" — psycopg2 needs "postgresql://"
+_raw_url = os.environ.get("DATABASE_URL", "")
+DATABASE_URL = _raw_url.replace("postgres://", "postgresql://", 1)
 
 
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(
+        DATABASE_URL,
+        sslmode="require",          # Supabase requires SSL
+        connect_timeout=10,
+    )
     return conn
 
 
